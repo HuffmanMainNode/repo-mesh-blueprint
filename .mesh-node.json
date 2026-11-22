@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "node_id": "repo-mesh-blueprint",
+  "namespace": "HuffmanMainNode",
+  "visibility": "public",
+  "hierarchy_tier": "domain-umbrella",
+  "architectural_plane": "contract-plane",
+  "tier": 1,
+  "plane": "contract-plane",
+  "parent": null,
+  "depends_on": [],
+  "description": "Public contract and architecture standards for the Huffman repository mesh."
+}
