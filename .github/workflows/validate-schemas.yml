@@ -1,0 +1,52 @@
+name: Validate Mesh Schemas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate JSON schemas and node templates
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path(".")
+          schemas = sorted((root / "schemas").rglob("*.json"))
+          templates = sorted((root / "templates").rglob(".mesh-node.json"))
+          descriptors = templates + ([root / ".mesh-node.json"] if (root / ".mesh-node.json").is_file() else [])
+
+          if not schemas:
+              raise SystemExit("No JSON schemas found")
+          if not templates:
+              raise SystemExit("No template .mesh-node.json files found")
+
+          for path in schemas:
+              value = json.loads(path.read_text(encoding="utf-8"))
+              if not isinstance(value, dict) or value.get("type") != "object":
+                  raise SystemExit(f"Invalid JSON schema document: {path}")
+
+          required = {"schema_version", "node_id", "namespace", "visibility", "tier", "plane", "parent"}
+          for path in descriptors:
+              value = json.loads(path.read_text(encoding="utf-8"))
+              missing = required - value.keys()
+              if missing:
+                  raise SystemExit(f"{path}: missing required fields: {', '.join(sorted(missing))}")
+              if value["visibility"] not in {"public", "private"}:
+                  raise SystemExit(f"{path}: invalid visibility")
+              if not isinstance(value["tier"], int) or not 1 <= value["tier"] <= 4:
+                  raise SystemExit(f"{path}: tier must be an integer from 1 through 4")
+              if not isinstance(value["plane"], str) or not value["plane"]:
+                  raise SystemExit(f"{path}: plane must be a non-empty string")
+
+          print(f"Validated {len(schemas)} JSON schemas and {len(descriptors)} node descriptors.")
+          PY
