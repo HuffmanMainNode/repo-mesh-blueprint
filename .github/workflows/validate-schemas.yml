@@ -75,3 +75,12 @@ jobs:
                   check(json.loads(lock_path.read_text()), schemas["mesh-lock"], str(lock_path))
           print(f"Validated {len(schemas)} schemas and {len(templates)} complete tier templates.")
           PY
+      - name: Build and verify the distributable contract bundle
+        run: |
+          set -euo pipefail
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          mkdir -p "dist/repo-mesh-blueprint-${VERSION}"
+          cp -R schemas templates docs AGENT_HANDSHAKE.md FAILURE_LEDGER.md README.md LICENSE "dist/repo-mesh-blueprint-${VERSION}/"
+          tar -czf "dist/repo-mesh-blueprint-${VERSION}.tar.gz" -C dist "repo-mesh-blueprint-${VERSION}"
+          (cd dist && sha256sum *.tar.gz > SHA256SUMS && sha256sum -c SHA256SUMS)
+          tar -tzf "dist/repo-mesh-blueprint-${VERSION}.tar.gz" >/dev/null
