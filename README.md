@@ -1,6 +1,6 @@
 # Federated Repository Mesh Blueprint
 
-Version: 1.0.1 development line  
+Version: 1.0.1  
 Status: Architectural standard and starter contracts
 
 ## Purpose
