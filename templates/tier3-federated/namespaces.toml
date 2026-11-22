@@ -1,0 +1,12 @@
+# Placeholder-only federation configuration. Replace handles only after scope review.
+schema_version = "1.0"
+
+[[namespaces]]
+handle = "primary-core-account"
+role = "authority"
+base_url = "https://github.com/REPLACE-ME"
+
+[[namespaces]]
+handle = "standards-spec-account"
+role = "standards"
+base_url = "https://github.com/REPLACE-ME"
