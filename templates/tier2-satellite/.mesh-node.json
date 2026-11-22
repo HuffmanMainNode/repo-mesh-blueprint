@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0.0",
+  "node_id": "example-satellite",
+  "namespace": "example-namespace",
+  "visibility": "public",
+  "tier": 2,
+  "plane": "compute-plane",
+  "parent": "https://github.com/example/authority",
+  "description": "Tier 2 satellite template"
+}
