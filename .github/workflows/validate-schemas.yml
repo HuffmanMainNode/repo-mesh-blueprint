@@ -21,7 +21,7 @@ jobs:
           import re
           from pathlib import Path
 
-          schemas = {p.stem: json.loads(p.read_text()) for p in Path("schemas").glob("*.schema.json")}
+          schemas = {p.name.removesuffix(".schema.json"): json.loads(p.read_text()) for p in Path("schemas").glob("*.schema.json")}
           expected = {"mesh-node", "mesh-lock", "wal-entry", "export-manifest"}
           if set(schemas) != expected:
               raise SystemExit(f"schema inventory mismatch: {sorted(schemas)}")
