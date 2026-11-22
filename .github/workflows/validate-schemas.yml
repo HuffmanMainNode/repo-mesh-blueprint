@@ -2,7 +2,7 @@ name: Validate Mesh Schemas
 
 on:
   push:
-    branches: [main]
+    branches: [main, "hardening/**"]
   pull_request:
     branches: [main]
 
@@ -13,40 +13,65 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Validate JSON schemas and node templates
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - name: Validate schemas and every starter template
         run: |
           python3 - <<'PY'
           import json
+          import re
           from pathlib import Path
 
-          root = Path(".")
-          schemas = sorted((root / "schemas").rglob("*.json"))
-          templates = sorted((root / "templates").rglob(".mesh-node.json"))
-          descriptors = templates + ([root / ".mesh-node.json"] if (root / ".mesh-node.json").is_file() else [])
+          schemas = {p.stem: json.loads(p.read_text()) for p in Path("schemas").glob("*.schema.json")}
+          expected = {"mesh-node", "mesh-lock", "wal-entry", "export-manifest"}
+          if set(schemas) != expected:
+              raise SystemExit(f"schema inventory mismatch: {sorted(schemas)}")
 
-          if not schemas:
-              raise SystemExit("No JSON schemas found")
-          if not templates:
-              raise SystemExit("No template .mesh-node.json files found")
+          def check(value, schema, where="$"):
+              kinds = schema.get("type")
+              kinds = kinds if isinstance(kinds, list) else [kinds] if kinds else []
+              mapping = {"object": dict, "array": list, "string": str, "integer": int,
+                         "boolean": bool, "null": type(None)}
+              if kinds and not any((type(value) is int if kind == "integer" else isinstance(value, mapping[kind]))
+                                   for kind in kinds):
+                  raise ValueError(f"{where}: type mismatch, expected {kinds}")
+              if "const" in schema and value != schema["const"]:
+                  raise ValueError(f"{where}: const mismatch")
+              if "enum" in schema and value not in schema["enum"]:
+                  raise ValueError(f"{where}: enum mismatch")
+              if isinstance(value, str):
+                  if len(value) < schema.get("minLength", 0): raise ValueError(f"{where}: too short")
+                  if "pattern" in schema and not re.search(schema["pattern"], value): raise ValueError(f"{where}: pattern mismatch")
+              if type(value) is int and not schema.get("minimum", value) <= value <= schema.get("maximum", value):
+                  raise ValueError(f"{where}: integer out of range")
+              if isinstance(value, dict):
+                  missing = set(schema.get("required", [])) - value.keys()
+                  if missing: raise ValueError(f"{where}: missing {sorted(missing)}")
+                  props = schema.get("properties", {})
+                  unknown = set(value) - props.keys()
+                  if schema.get("additionalProperties") is False and unknown: raise ValueError(f"{where}: unknown {sorted(unknown)}")
+                  for key, child in props.items():
+                      if key in value: check(value[key], child, f"{where}.{key}")
+              if isinstance(value, list) and "items" in schema:
+                  for index, child in enumerate(value): check(child, schema["items"], f"{where}[{index}]")
 
-          for path in schemas:
-              value = json.loads(path.read_text(encoding="utf-8"))
-              if not isinstance(value, dict) or value.get("type") != "object":
-                  raise SystemExit(f"Invalid JSON schema document: {path}")
-
-          required = {"schema_version", "node_id", "namespace", "visibility", "tier", "plane", "parent"}
-          for path in descriptors:
-              value = json.loads(path.read_text(encoding="utf-8"))
-              missing = required - value.keys()
-              if missing:
-                  raise SystemExit(f"{path}: missing required fields: {', '.join(sorted(missing))}")
-              if value["visibility"] not in {"public", "private"}:
-                  raise SystemExit(f"{path}: invalid visibility")
-              if not isinstance(value["tier"], int) or not 1 <= value["tier"] <= 4:
-                  raise SystemExit(f"{path}: tier must be an integer from 1 through 4")
-              if not isinstance(value["plane"], str) or not value["plane"]:
-                  raise SystemExit(f"{path}: plane must be a non-empty string")
-
-          print(f"Validated {len(schemas)} JSON schemas and {len(descriptors)} node descriptors.")
+          for name, schema in schemas.items():
+              if schema.get("type") != "object" or not schema.get("$schema", "").endswith("2020-12/schema"):
+                  raise SystemExit(f"{name}: unsupported schema document")
+          templates = sorted(Path("templates").glob("*/.mesh-node.json"))
+          if len(templates) != 3: raise SystemExit(f"expected three tier templates, found {len(templates)}")
+          for path in templates:
+              data = json.loads(path.read_text())
+              check(data, schemas["mesh-node"], str(path))
+              expected_tier = int(path.parent.name.split("-")[0].replace("tier", ""))
+              if data["tier"] != expected_tier: raise SystemExit(f"{path}: tier mismatch")
+              for filename in ("summon.lock",):
+                  if not (path.parent / filename).is_file(): raise SystemExit(f"{path.parent}: missing {filename}")
+              summon = json.loads((path.parent / "summon.lock").read_text())
+              if summon.get("schema_version") != "1.0.0" or not isinstance(summon.get("bootstrap_commands"), list):
+                  raise SystemExit(f"{path.parent}/summon.lock: invalid")
+              if expected_tier >= 2:
+                  lock_path = path.parent / "mesh.lock"
+                  if not lock_path.is_file(): raise SystemExit(f"{path.parent}: missing mesh.lock")
+                  check(json.loads(lock_path.read_text()), schemas["mesh-lock"], str(lock_path))
+          print(f"Validated {len(schemas)} schemas and {len(templates)} complete tier templates.")
           PY
