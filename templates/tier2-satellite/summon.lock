@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0.0",
+  "env_defaults": {},
+  "bootstrap_commands": [],
+  "healthcheck_command": ["python3", "-c", "print(\"healthcheck: ok\")"]
+}
