@@ -1,0 +1,70 @@
+name: Publish Immutable Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag, for example v1.0.1"
+        required: true
+        type: string
+        default: "v1.0.1"
+      confirm_release:
+        description: "Confirm immutable releases are enabled in repository settings and this is ready to publish"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-release-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Validate release request
+        env:
+          TAG: ${{ inputs.version }}
+          CONFIRMED: ${{ inputs.confirm_release }}
+        run: |
+          set -euo pipefail
+          if [[ "$CONFIRMED" != "true" ]]; then
+            echo "::error::Confirm immutable releases are enabled in repository settings before publishing."
+            exit 1
+          fi
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version must match vMAJOR.MINOR.PATCH."
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::Tag $TAG already exists. This workflow never moves or overwrites a tag."
+            exit 1
+          fi
+      - name: Create annotated tag and GitHub release
+        env:
+          TAG: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TARGET_SHA="$(git rev-parse HEAD)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" "$TARGET_SHA" -m "Release $TAG"
+          git push origin "refs/tags/$TAG"
+          gh release create "$TAG" --verify-tag --title "$TAG" --generate-notes --latest
+          IMMUTABLE="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq '.immutable')"
+          if [[ "$IMMUTABLE" != "true" ]]; then
+            echo "::error::GitHub did not mark this release immutable. Removing only the release and tag created by this run."
+            gh release delete "$TAG" --yes
+            git push origin --delete "$TAG"
+            exit 1
+          fi
+          echo "Published immutable release $TAG at $TARGET_SHA"
