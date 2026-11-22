@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0.0",
+  "depends_on": [],
+  "env_defaults": {},
+  "bootstrap_commands": [],
+  "healthcheck_command": ["python3", "-c", "print('federation contract: ready')"]
+}
