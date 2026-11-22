@@ -13,6 +13,9 @@
     "tier": {"type": "integer", "minimum": 1, "maximum": 4},
     "plane": {"enum": ["contract-plane", "ingress-plane", "compute-plane", "provenance-plane", "control-plane", "tooling-plane"]},
     "parent": {"type": ["string", "null"]},
-    "description": {"type": "string"}
+    "description": {"type": "string"},
+    "hierarchy_tier": {"enum": ["domain-umbrella", "satellite", "federated", "standalone"]},
+    "architectural_plane": {"enum": ["contract-plane", "ingress-plane", "compute-plane", "provenance-plane", "control-plane", "tooling-plane"]},
+    "depends_on": {"type": "array", "items": {"type": "string", "minLength": 1}}
   }
 }
