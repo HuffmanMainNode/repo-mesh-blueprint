@@ -1,0 +1,5 @@
+{
+  "schema_version": "1.0.0",
+  "keys": [],
+  "policy": "Populate only after out-of-band key verification."
+}
