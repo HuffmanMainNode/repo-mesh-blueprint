@@ -11,11 +11,12 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["node_id", "uri", "version", "depends_on"],
+        "required": ["node_id", "uri", "version", "commit", "depends_on"],
         "properties": {
           "node_id": {"type": "string"},
           "uri": {"type": "string"},
           "version": {"type": "string"},
+          "commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
           "depends_on": {"type": "array", "items": {"type": "string"}}
         },
         "additionalProperties": false

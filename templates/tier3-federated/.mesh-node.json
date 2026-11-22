@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "node_id": "example-federation",
+  "namespace": "example-federation",
+  "visibility": "public",
+  "hierarchy_tier": "federated",
+  "architectural_plane": "contract-plane",
+  "tier": 3,
+  "plane": "contract-plane",
+  "parent": null,
+  "depends_on": [],
+  "description": "Tier 3 federation root. Populate trust roots only after out-of-band verification."
+}
