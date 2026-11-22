@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://huffmanmainnode.github.io/repo-mesh-blueprint/schemas/export-manifest.schema.json",
+  "title": "export-manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "source", "destination", "allow_fields", "deny_private", "require_review"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "source": {"type": "string"},
+    "destination": {"type": "string"},
+    "allow_fields": {"type": "array", "items": {"type": "string"}},
+    "deny_private": {"const": true},
+    "require_review": {"type": "boolean"}
+  }
+}
