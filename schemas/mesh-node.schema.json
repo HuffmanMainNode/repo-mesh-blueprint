@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://huffmanmainnode.github.io/repo-mesh-blueprint/schemas/mesh-node.schema.json",
+  "title": "mesh-node",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "node_id", "namespace", "visibility", "tier", "plane", "parent"],
+  "properties": {
+    "schema_version": {"type": "string", "pattern": "^1\\."},
+    "node_id": {"type": "string", "minLength": 1},
+    "namespace": {"type": "string", "minLength": 1},
+    "visibility": {"enum": ["private", "public"]},
+    "tier": {"type": "integer", "minimum": 1, "maximum": 4},
+    "plane": {"enum": ["contract-plane", "ingress-plane", "compute-plane", "provenance-plane", "control-plane", "tooling-plane"]},
+    "parent": {"type": ["string", "null"]},
+    "description": {"type": "string"}
+  }
+}
