@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://huffmanmainnode.github.io/repo-mesh-blueprint/schemas/mesh-lock.schema.json",
+  "title": "mesh-lock",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "satellites"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "satellites": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["node_id", "uri", "version", "depends_on"],
+        "properties": {
+          "node_id": {"type": "string"},
+          "uri": {"type": "string"},
+          "version": {"type": "string"},
+          "depends_on": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}
