@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://huffmanmainnode.github.io/repo-mesh-blueprint/schemas/wal-entry.schema.json",
+  "title": "wal-entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sequence", "timestamp", "step", "status", "artifact", "note", "prev_hash", "entry_hash"],
+  "properties": {
+    "sequence": {"type": "integer", "minimum": 1},
+    "timestamp": {"type": "string"},
+    "step": {"type": "string"},
+    "status": {"enum": ["PENDING", "COMMITTED", "FAILED"]},
+    "artifact": {"type": ["string", "null"]},
+    "note": {"type": "string"},
+    "prev_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "entry_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}
